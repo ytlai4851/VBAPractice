@@ -1,0 +1,96 @@
+
+Sub CreatTable()
+    ActiveDocument.Tables(1).Select 'origin table
+    Selection.Copy
+    ActiveDocument.Range.InsertAfter (vbCrLf)
+    Selection.EndKey Unit:=wdStory
+    Selection.Paste
+End Sub
+
+Sub CopyPPT()
+Set oPPTApp = CreateObject("PowerPoint.Application")
+Set oPPTFile = oPPTApp.Presentations.Open(FileName:="C:\Users\tomlai\Desktop\VBAtesting\1.pptx")
+Set oEXTApp = CreateObject("Excel.Application")
+oEXTApp.Visible = True
+Set oEXTFile = oEXTApp.Workbooks.Open(FileName:="C:\Users\tomlai\Desktop\VBAtesting\1.xlsx")
+Dim wdtable As Integer
+wdtable = 2
+havetable = 0
+
+For slidesn = 62 To 62
+    excelu = oEXTFile.sheets(1).UsedRange.Rows.Count + 1
+    If Hex(oPPTFile.Slides(slidesn).Background.Fill.ForeColor.RGB) = "FFFFFF" Then
+        CreatTable
+        For Each slido In oPPTFile.Slides(slidesn).Shapes
+            Select Case slido.Type
+                Case 13
+                    slido.Copy
+                    If havetable = 0 Then
+                        ActiveDocument.Tables(wdtable - 1).Cell(6, 2).Range.Select
+                    Else
+                        ActiveDocument.Tables(wdtable).Cell(6, 2).Range.Select
+                    End If
+                    Selection.EndOf Unit:=12
+                    Selection.Paste
+
+                    
+                Case 14
+                    a = Left(slido.TextFrame.TextRange.Text, 3)
+                    ActiveDocument.Tables(wdtable).Cell(3, 2).Range.Text = a
+                    oEXTFile.sheets(1).Cells(oEXTFile.sheets(1).UsedRange.Rows.Count + 1, "D") = a
+                
+                
+                Case 19
+                        havetable = 1
+                        
+                        With slido.Table
+                            .Cell(1, 2).Shape.TextFrame.TextRange.Copy
+                        End With
+                        ActiveDocument.Tables(wdtable).Cell(1, 2).Range.PasteAndFormat (wdFormatPlainText) '72 62 33 39 error
+                        oEXTFile.sheets(1).Cells(excelu, "A").Value = slido.Table.Cell(1, 2).Shape.TextFrame.TextRange
+                        
+                        If slido.Table.Cell(1, 4).Shape.TextFrame.TextRange <> "" Then
+                            With slido.Table
+                                .Cell(1, 4).Shape.TextFrame.TextRange.Copy
+                            End With
+                            ActiveDocument.Tables(wdtable).Cell(1, 4).Range.PasteAndFormat (wdFormatPlainText) '48 error
+                            oEXTFile.sheets(1).Cells(excelu, "B").Value = slido.Table.Cell(1, 4).Shape.TextFrame.TextRange
+                            
+                        Else
+                            ActiveDocument.Tables(wdtable).Cell(1, 4).Range.Text = "NA"
+                            oEXTFile.sheets(1).Cells(excelu, "B").Value = "NA"
+                        End If
+                        
+                        
+                        With slido.Table
+                            .Cell(2, 2).Shape.TextFrame.TextRange.Copy
+                        End With
+                        ActiveDocument.Tables(wdtable).Cell(2, 2).Range.PasteAndFormat (wdFormatPlainText) '59 error
+                        oEXTFile.sheets(1).Cells(excelu, "C").Value = slido.Table.Cell(2, 2).Shape.TextFrame.TextRange
+                        
+                        
+                        With slido.Table
+                            .Cell(3, 2).Shape.TextFrame.TextRange.Copy
+                        End With
+                        ActiveDocument.Tables(wdtable).Cell(4, 2).Range.PasteAndFormat (wdFormatPlainText)
+                        oEXTFile.sheets(1).Cells(excelu, "E").Value = slido.Table.Cell(3, 2).Shape.TextFrame.TextRange
+                        
+                        
+                        With slido.Table
+                            .Cell(4, 2).Shape.TextFrame.TextRange.Copy
+                        End With
+                        ActiveDocument.Tables(wdtable).Cell(5, 2).Range.PasteAndFormat (wdFormatPlainText)
+                        oEXTFile.sheets(1).Cells(excelu, "F").Value = slido.Table.Cell(4, 2).Shape.TextFrame.TextRange
+            End Select
+        
+        Next slido
+        If havetable = 0 Then
+            ActiveDocument.Tables(wdtable).Delete
+            oEXTFile.sheets(1).Rows(excelu).Delete
+            wdtable = wdtable - 1
+        End If
+        wdtable = wdtable + 1
+        havetable = 0
+    End If
+Next
+End Sub
